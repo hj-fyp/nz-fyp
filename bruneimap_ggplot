@@ -1,0 +1,43 @@
+#install.packages("pak")
+#pak::pkg_install("propertypricebn/bruneimap")
+
+#install.packages("pkgbuild")
+#pkgbuild::check_build_tools(debug = TRUE)
+
+#install.packages("ggthemes")
+
+library(tidyverse)
+library(ggthemes)
+theme_set(theme_wsj())
+theme_set(theme_gdocs())
+library(bruneimap)
+library(sf)
+
+ggplot(kpg_sf) +
+  geom_sf(aes(fill = area)) +
+  geom_sf(data = mkm_sf, col = "white", lwd = 0.5, fill = NA) +
+  #theme(legend.position = "none") +
+  scale_fill_viridis_c(option = "turbo")
+
+view(kpg_sf)
+
+kpg_sf %>% filter(grepl("lumut",kpg_sf$kampong))
+
+
+bruhome %>%
+  group_by(mukim) %>%
+  summarise(price = median(price)) %>%
+  left_join(x = mkm_sf, y = .) %>%
+  ggplot() +
+  geom_sf(aes(fill = price))
+
+
+#Maybe include X, Y in your linear model
+dat <-
+  bruhome %>%
+  left_join(mkm_sf %>% select(mukim, X, Y), by = "mukim")
+mod <- lm(price ~ X + Y, dat)
+pred_price <- predict(mod, mkm_sf)
+mkm_sf$pred_price <- pred_price
+ggplot(mkm_sf, aes(fill = pred_price)) +
+  geom_sf()
